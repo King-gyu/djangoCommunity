@@ -3,7 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.generics import get_object_or_404
 from users.models import User
 from django.shortcuts import render
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 from rest_framework import status
 from rest_framework import permissions
 
@@ -41,12 +41,38 @@ class UserView(APIView):
         return Response({"message": "delete 요청입니다!"})
 
 
+# Create your views here.
 
+
+class UserLogin(APIView):
+    serializer_class = CustomTokenObtainPairSerializer
+    def post(self, request):
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data
+        if not user:
+            return Response({'message': 'login 실패'})
+        login(request, user)
+        return Response({'message': 'login 성공'})
+class UserLogout(APIView):
+    def post(self, request):
+        logout(request)
+        return Response({'message': 'logout'})
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
 
+
+class UserLogin(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    def get(self, request):
+        print(request.user)
+        user = request.user
+        # user.is_admin = True
+        # user.save()
+        return Response("get")
 
 
 
@@ -56,8 +82,8 @@ class ConfirmEmailView(APIView):
     def get(self, *args, **kwargs):
         self.object = confirmation = self.get_object()
         confirmation.confirm(self.request)
-
-        return HttpResponseRedirect("/")  
+        # A React Router Route will handle the failure scenario
+        return HttpResponseRedirect("/")  # 인증성공
 
     def get_object(self, queryset=None):
         key = self.kwargs["key"]
@@ -68,8 +94,8 @@ class ConfirmEmailView(APIView):
             try:
                 email_confirmation = queryset.get(key=key.lower())
             except EmailConfirmation.DoesNotExist:
-
-                return HttpResponseRedirect("/")  
+                # A React Router Route will handle the failure scenario
+                return HttpResponseRedirect("/")  # 인증실패
         return email_confirmation
 
     def get_queryset(self):

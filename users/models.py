@@ -1,7 +1,5 @@
 from django.db import models
-
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser, User
-
 
 
 class UserManager(BaseUserManager):
@@ -30,7 +28,8 @@ class Users(AbstractBaseUser):
     bio = models.TextField("자기소개", max_length=128, blank=True, default="")
     # imgfile = models.CharField("사진", max_length=128)
 
-
+    followings = models.ManyToManyField(
+        'self', symmetrical=False, related_name='follwers')
     is_active = models.BooleanField(default=True)
     is_admin = models.BooleanField(default=False)
 
